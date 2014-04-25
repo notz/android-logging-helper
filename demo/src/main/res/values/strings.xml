@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Logging Helper Demo</string>
+    <string name="button_share_log_text">Share log</string>
+    <string name="action_settings">Settings</string>
+
+</resources>
