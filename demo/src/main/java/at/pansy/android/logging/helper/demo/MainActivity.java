@@ -33,7 +33,9 @@ public class MainActivity extends ActionBarActivity {
 
     private void logSomething() {
 
-        logger.config("This is a debug log entry");
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("This is a debug log entry");
+        }
         logger.info("This is a info log entry");
         logger.warning("This is a warning");
         logger.severe("This is a error");
@@ -45,5 +47,7 @@ public class MainActivity extends ActionBarActivity {
         }
 
         logger.log(Level.WARNING, "this is a formatted {0}", new Object[] { "message"});
+
+        logger.fine("This is a 2nd debug log entry");
     }
 }
