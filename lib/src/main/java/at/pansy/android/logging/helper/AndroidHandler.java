@@ -18,8 +18,8 @@ import java.util.logging.MemoryHandler;
 
 public class AndroidHandler extends Handler {
 
-    private static final int MAX_FILE_SIZE = 256 * 1024;
-    private static  final int MEMORY_SIZE = 1000;
+    private static final int MAX_FILE_SIZE = 128 * 1024;
+    private static final int MEMORY_SIZE = 1000;
 
     private MemoryHandler memoryHandler;
     private FileHandler fileHandler;
@@ -37,11 +37,13 @@ public class AndroidHandler extends Handler {
         this.logcatEnabled = logcatEnabled;
         this.packageName = context.getPackageName();
 
+        setLevel(level);
+
         try {
             File cacheDir = context.getCacheDir();
             if (cacheDir != null) {
-                String fileName = cacheDir.getAbsolutePath() + File.separator + tag + ".log";
-                fileHandler = new FileHandler(fileName, maxFileSize, 1, true);
+                String fileName = cacheDir.getAbsolutePath() + File.separator + tag + ".%g.log";
+                fileHandler = new FileHandler(fileName, maxFileSize, 2, true);
                 fileHandler.setLevel(level);
 
                 if (pushLevel.intValue() > level.intValue() && memorySize > 1) {
@@ -102,13 +104,8 @@ public class AndroidHandler extends Handler {
 
         if (logcatEnabled) {
 
-            int level = getLogcatLevel(logRecord.getLevel());
-            if (!Log.isLoggable(tag, level)) {
-                return;
-            }
-
             try {
-                Log.println(level, tag, message);
+                Log.println(getLogcatLevel(logRecord.getLevel()), tag, message);
             } catch (RuntimeException e) {
                 Log.e(tag, "Error logging message.", e);
             }

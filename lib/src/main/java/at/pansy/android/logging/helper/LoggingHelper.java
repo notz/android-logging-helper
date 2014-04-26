@@ -14,6 +14,9 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -41,6 +44,7 @@ public final class LoggingHelper {
             rootLogger.removeHandler(handler);
         }
 
+        rootLogger.setLevel(androidHandler.getLevel());
         rootLogger.addHandler(androidHandler);
     }
 
@@ -80,19 +84,27 @@ public final class LoggingHelper {
                 try {
                     File cacheDir = context.getCacheDir();
                     if (cacheDir != null) {
-                        File logFile = new File(cacheDir.getAbsolutePath() + File.separator + tag + ".log");
-                        reader = new BufferedReader(new FileReader(logFile));
 
                         File zipFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + tag + ".log.gz");
                         writer = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(zipFile))));
 
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            writer.write(line);
-                            writer.newLine();
+                        ArrayList<File> logFiles = new ArrayList<>();
+                        for (int i = 1; i >= 0; i--) {
+                            File logFile = new File(cacheDir.getAbsolutePath() + File.separator + tag + "." + i + ".log");
+                            if (logFile.exists()) {
+
+                                reader = new BufferedReader(new FileReader(logFile));
+
+                                String line;
+                                while ((line = reader.readLine()) != null) {
+                                    writer.write(line);
+                                    writer.newLine();
+                                }
+
+                                reader.close();
+                            }
                         }
 
-                        reader.close();
                         writer.close();
 
                         return Uri.fromFile(zipFile);
