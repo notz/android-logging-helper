@@ -15,8 +15,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -60,20 +58,23 @@ public final class LoggingHelper {
     }
 
     public static void shareLog(final Context context) {
-        shareLog(context, null, null);
+        shareLog(context, null, null, null);
     }
 
     public static void shareLog(final Context context, final String email, final String subject) {
+        shareLog(context, email, subject, null);
+    }
 
+    public static void shareLog(final Context context, final String email, final String subject, final String body) {
         AndroidHandler androidHandler = getAndroidHandler();
         if (androidHandler != null) {
             androidHandler.flush();
 
-            shareLog(context, androidHandler.getTag(), email, subject);
+            doShareLog(context, androidHandler.getTag(), email, subject, body);
         }
     }
 
-    private static void shareLog(final Context context, final String tag, final String email, final String subject) {
+    private static void doShareLog(final Context context, final String tag, final String email, final String subject, final String body) {
 
         new AsyncTask<Void, Void, Uri>() {
             @Override
@@ -125,6 +126,11 @@ public final class LoggingHelper {
                     }
                     if (subject != null) {
                         intent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
+                    }
+                    if (body != null) {
+                        // According to http://developer.android.com/reference/android/content/Intent.html#ACTION_SEND a send-intent should
+                        // either have EXTRA_TEXT or EXTRA_STREAM set, both setting both seems to be respected by most receivers (e.g. GMail)
+                        intent.putExtra(android.content.Intent.EXTRA_TEXT, body);
                     }
                     intent.putExtra(android.content.Intent.EXTRA_STREAM, result);
 
