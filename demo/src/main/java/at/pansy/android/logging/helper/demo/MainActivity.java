@@ -24,7 +24,7 @@ public class MainActivity extends ActionBarActivity {
         shareLogButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                LoggingHelper.shareLog(MainActivity.this, null, "This is a logging demo");
+                LoggingHelper.shareLog(MainActivity.this, null, "This is a logging demo", "This is the optional body text");
             }
         });
 
