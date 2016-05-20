@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Environment;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -86,7 +85,7 @@ public final class LoggingHelper {
                     File cacheDir = context.getCacheDir();
                     if (cacheDir != null) {
 
-                        File zipFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + tag + ".log.gz");
+                        File zipFile = new File(context.getExternalCacheDir(), tag + ".log.gz");
                         writer = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(zipFile))));
 
                         ArrayList<File> logFiles = new ArrayList<>();
