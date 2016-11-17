@@ -3,16 +3,7 @@ apply plugin: 'maven'
 
 group = 'at.pansy.android'
 archivesBaseName = 'android-logging-helper'
-version = '1.2'
-
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:2.1.0'
-    }
-}
+version = '1.2.1'
 
 android {
     compileSdkVersion 23
@@ -39,7 +30,7 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-}
+}X
 
 if (!hasProperty('uploadRepositoryUri')) project.ext.uploadRepositoryUri = 'file://' + new File(System.getProperty('user.home'), '.m2/repository').absolutePath
 if (!hasProperty('uploadSnapshotRepositoryUri')) project.ext.uploadSnapshotRepositoryUri = 'file://' + new File(System.getProperty('user.home'), '.m2/repository').absolutePath
