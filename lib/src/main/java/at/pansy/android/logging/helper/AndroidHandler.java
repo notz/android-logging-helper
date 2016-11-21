@@ -120,8 +120,10 @@ public class AndroidHandler extends Handler {
             return Log.WARN;
         } else if (value >= Level.INFO.intValue()) {
             return Log.INFO;
-        } else {
+        } else if (value >= Level.FINE.intValue()) {
             return Log.DEBUG;
+        } else {
+            return Log.VERBOSE;
         }
     }
 
