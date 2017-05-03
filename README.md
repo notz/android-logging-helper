@@ -10,6 +10,17 @@ The lib uses native java logging and is <b>very small</b>.
 Usage
 -----
 
+Add the content provider to your application manifest
+
+<pre>
+&lt;provider
+	android:name="at.pansy.android.logging.helper.LogFileProvider"
+	android:authorities="${applicationId}.logfileprovider"
+	android:enabled="true"
+	android:exported="false"
+	android:grantUriPermissions="true" /&gt;
+</pre>
+
 Initialize logging in your application class
 
 <pre>

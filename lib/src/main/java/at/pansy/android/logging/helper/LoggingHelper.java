@@ -3,7 +3,6 @@ package at.pansy.android.logging.helper;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.AsyncTask;
 
 import java.io.BufferedReader;
@@ -75,9 +74,9 @@ public final class LoggingHelper {
 
     private static void doShareLog(final Context context, final String tag, final String email, final String subject, final String body) {
 
-        new AsyncTask<Void, Void, Uri>() {
+        new AsyncTask<Void, Void, Boolean>() {
             @Override
-            protected Uri doInBackground(Void... params) {
+            protected Boolean doInBackground(Void... params) {
                 BufferedReader reader;
                 BufferedWriter writer;
 
@@ -85,7 +84,7 @@ public final class LoggingHelper {
                     File cacheDir = context.getCacheDir();
                     if (cacheDir != null) {
 
-                        File zipFile = new File(context.getExternalCacheDir(), tag + ".log.gz");
+                        File zipFile = LogFileProvider.getDestinationFile(context);
                         writer = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(zipFile))));
 
                         ArrayList<File> logFiles = new ArrayList<>();
@@ -107,17 +106,17 @@ public final class LoggingHelper {
 
                         writer.close();
 
-                        return Uri.fromFile(zipFile);
+                        return true;
                     }
                 } catch (IOException e) {
                     logger.log(Level.SEVERE, e.getMessage(), e);
                 }
-                return null;
+                return false;
             }
 
             @Override
-            protected void onPostExecute(Uri result) {
-                if (result != null) {
+            protected void onPostExecute(Boolean success) {
+                if (success != null && success) {
                     Intent intent = new Intent(android.content.Intent.ACTION_SEND);
                     intent.setType("application/x-gzip");
                     if (email != null) {
@@ -131,7 +130,8 @@ public final class LoggingHelper {
                         // either have EXTRA_TEXT or EXTRA_STREAM set, both setting both seems to be respected by most receivers (e.g. GMail)
                         intent.putExtra(android.content.Intent.EXTRA_TEXT, body);
                     }
-                    intent.putExtra(android.content.Intent.EXTRA_STREAM, result);
+                    intent.putExtra(android.content.Intent.EXTRA_STREAM, LogFileProvider.createFileUri(context, tag));
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
                     try {
                         context.startActivity(intent);
