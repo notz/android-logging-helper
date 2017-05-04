@@ -10,12 +10,19 @@ import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.GZIPOutputStream;
 
 public class LogFileProvider extends ContentProvider {
 
@@ -28,6 +35,9 @@ public class LogFileProvider extends ContentProvider {
     private static final String[] COLUMNS = {
             OpenableColumns.DISPLAY_NAME,
             OpenableColumns.SIZE,
+            MediaStore.MediaColumns.DATA,
+            MediaStore.MediaColumns.MIME_TYPE
+
     };
 
     public LogFileProvider() {
@@ -74,6 +84,9 @@ public class LogFileProvider extends ContentProvider {
         if (segments.size() >= 2) {
             tag = segments.get(1);
         }
+
+        // consumer started a query, so build a logfile to serve
+        writeLogFileContents(tag);
 
         if (projection == null) {
             projection = COLUMNS;
@@ -133,6 +146,41 @@ public class LogFileProvider extends ContentProvider {
         }
 
         return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY);
+    }
+
+    private void writeLogFileContents(String tag) {
+        Context context = getContext();
+        BufferedReader reader;
+        BufferedWriter writer;
+
+        try {
+            File cacheDir = context.getCacheDir();
+            if (cacheDir != null) {
+
+                File zipFile = getDestinationFile(context);
+                writer = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(zipFile))));
+
+                for (int i = 1; i >= 0; i--) {
+                    File logFile = new File(cacheDir.getAbsolutePath() + File.separator + tag + "." + i + ".log");
+                    if (logFile.exists()) {
+
+                        reader = new BufferedReader(new FileReader(logFile));
+
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            writer.write(line);
+                            writer.newLine();
+                        }
+
+                        reader.close();
+                    }
+                }
+
+                writer.close();
+            }
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, e.getMessage(), e);
+        }
     }
 
     @Override
