@@ -3,20 +3,12 @@ package at.pansy.android.logging.helper;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
+import android.os.ParcelFileDescriptor;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
+import java.io.FileNotFoundException;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.zip.GZIPOutputStream;
 
 @SuppressWarnings("unused")
 public final class LoggingHelper {
@@ -72,75 +64,37 @@ public final class LoggingHelper {
         }
     }
 
+    public static ParcelFileDescriptor getLogFileDescriptor(final Context context) throws FileNotFoundException {
+        AndroidHandler androidHandler = getAndroidHandler();
+        if (androidHandler == null) {
+            throw new IllegalStateException();
+        }
+
+        return context.getContentResolver().openFileDescriptor(LogFileProvider.createFileUri(context, androidHandler.getTag()), "r");
+    }
+
     private static void doShareLog(final Context context, final String tag, final String email, final String subject, final String body) {
+        Intent intent = new Intent(android.content.Intent.ACTION_SEND);
+        intent.setType("application/x-gzip");
+        if (email != null) {
+            intent.putExtra(android.content.Intent.EXTRA_EMAIL, new String[]{email});
+        }
+        if (subject != null) {
+            intent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
+        }
+        if (body != null) {
+            // According to http://developer.android.com/reference/android/content/Intent.html#ACTION_SEND a send-intent should
+            // either have EXTRA_TEXT or EXTRA_STREAM set, both setting both seems to be respected by most receivers (e.g. GMail)
+            intent.putExtra(android.content.Intent.EXTRA_TEXT, body);
+        }
+        intent.putExtra(android.content.Intent.EXTRA_STREAM, LogFileProvider.createFileUri(context, tag));
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
-        new AsyncTask<Void, Void, Boolean>() {
-            @Override
-            protected Boolean doInBackground(Void... params) {
-                BufferedReader reader;
-                BufferedWriter writer;
-
-                try {
-                    File cacheDir = context.getCacheDir();
-                    if (cacheDir != null) {
-
-                        File zipFile = LogFileProvider.getDestinationFile(context);
-                        writer = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(zipFile))));
-
-                        ArrayList<File> logFiles = new ArrayList<>();
-                        for (int i = 1; i >= 0; i--) {
-                            File logFile = new File(cacheDir.getAbsolutePath() + File.separator + tag + "." + i + ".log");
-                            if (logFile.exists()) {
-
-                                reader = new BufferedReader(new FileReader(logFile));
-
-                                String line;
-                                while ((line = reader.readLine()) != null) {
-                                    writer.write(line);
-                                    writer.newLine();
-                                }
-
-                                reader.close();
-                            }
-                        }
-
-                        writer.close();
-
-                        return true;
-                    }
-                } catch (IOException e) {
-                    logger.log(Level.SEVERE, e.getMessage(), e);
-                }
-                return false;
-            }
-
-            @Override
-            protected void onPostExecute(Boolean success) {
-                if (success != null && success) {
-                    Intent intent = new Intent(android.content.Intent.ACTION_SEND);
-                    intent.setType("application/x-gzip");
-                    if (email != null) {
-                        intent.putExtra(android.content.Intent.EXTRA_EMAIL, new String[]{email});
-                    }
-                    if (subject != null) {
-                        intent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
-                    }
-                    if (body != null) {
-                        // According to http://developer.android.com/reference/android/content/Intent.html#ACTION_SEND a send-intent should
-                        // either have EXTRA_TEXT or EXTRA_STREAM set, both setting both seems to be respected by most receivers (e.g. GMail)
-                        intent.putExtra(android.content.Intent.EXTRA_TEXT, body);
-                    }
-                    intent.putExtra(android.content.Intent.EXTRA_STREAM, LogFileProvider.createFileUri(context, tag));
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                    try {
-                        context.startActivity(intent);
-                    } catch (ActivityNotFoundException e) {
-                        // TODO add callback
-                    }
-                }
-            }
-        }.execute();
+        try {
+            context.startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            // TODO add callback
+        }
     }
 
     private static AndroidHandler getAndroidHandler() {
