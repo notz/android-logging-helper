@@ -38,6 +38,8 @@ afterEvaluate {
         publications {
             mavenRelease(MavenPublication) {
                 from components.release
+
+                artifactId "android-logging-helper"
             }
         }
 
