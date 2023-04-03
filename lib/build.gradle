@@ -1,24 +1,24 @@
 apply plugin: 'com.android.library'
-apply plugin: 'maven'
+apply plugin: 'maven-publish'
 
 group = 'at.pansy.android'
 archivesBaseName = 'android-logging-helper'
 version = '1.3.1'
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion "25.0.2"
+    compileSdkVersion 33
+    buildToolsVersion "30.0.3"
 
     defaultConfig {
-        minSdkVersion 9
-        targetSdkVersion 23
+        minSdkVersion 14
+        targetSdkVersion 33
         versionCode 1
         versionName version
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_7
-        targetCompatibility JavaVersion.VERSION_1_7
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
     buildTypes {
         release {
@@ -26,25 +26,29 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
+    namespace 'at.pansy.android.logging.helper'
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    api fileTree(dir: 'libs', include: ['*.jar'])
 }
 
-if (!hasProperty('uploadRepositoryUri')) project.ext.uploadRepositoryUri = 'file://' + new File(System.getProperty('user.home'), '.m2/repository').absolutePath
-if (!hasProperty('uploadSnapshotRepositoryUri')) project.ext.uploadSnapshotRepositoryUri = 'file://' + new File(System.getProperty('user.home'), '.m2/repository').absolutePath
-if (!hasProperty('uploadUser')) project.ext.uploadUser = ''
-if (!hasProperty('uploadPassword')) project.ext.uploadPassword = ''
-
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            repository(url: uri(uploadRepositoryUri)) {
-                authentication(userName: uploadUser, password: uploadPassword)
+afterEvaluate {
+    publishing {
+        publications {
+            mavenRelease(MavenPublication) {
+                from components.release
             }
-            snapshotRepository(url: uri(uploadSnapshotRepositoryUri)) {
-                authentication(userName: uploadUser, password: uploadPassword)
+        }
+
+        repositories {
+            maven {
+                name = "GitHubPackages"
+                url = "https://maven.pkg.github.com/notz/android-logging-helper"
+                credentials {
+                    username = System.getenv("GITHUB_ACTOR")
+                    password = System.getenv("GITHUB_TOKEN")
+                }
             }
         }
     }
